@@ -18,95 +18,6 @@ public:
     uint8_t clock_frequency_mhz);
 
   bool communicating();
-  uint32_t getVersion();
-
-  void initialize();
-
-  void setRampMode(size_t motor);
-  void setSoftMode(size_t motor);
-  void setVelocityMode(size_t motor);
-
-  void setLimitsInHz(size_t motor,
-    uint32_t velocity_min_hz,
-    uint32_t velocity_max_hz,
-    uint32_t acceleration_max_hz_per_s);
-
-  uint32_t getVelocityMaxUpperLimitInHz();
-  uint32_t getVelocityMinInHz(size_t motor);
-  uint32_t getVelocityMaxInHz(size_t motor);
-
-  int32_t getTargetVelocityInHz(size_t motor);
-  void setTargetVelocityInHz(size_t motor,
-    int32_t velocity_hz);
-  bool atTargetVelocity(size_t motor);
-
-  int32_t getActualVelocityInHz(size_t motor);
-
-  uint32_t getAccelerationMaxUpperLimitInHzPerS(uint32_t velocity_max_hz);
-  uint32_t getAccelerationMaxLowerLimitInHzPerS(uint32_t velocity_max_hz);
-  uint32_t getAccelerationMaxInHzPerS(size_t motor);
-  uint32_t getActualAccelerationInHzPerS(size_t motor);
-
-  int32_t getTargetPosition(size_t motor);
-  void setTargetPosition(size_t motor,
-    int32_t position);
-  bool atTargetPosition(size_t motor);
-
-  int32_t getActualPosition(size_t motor);
-  void setActualPosition(size_t motor,
-    int32_t position);
-
-  void stop(size_t motor);
-  void stopAll();
-
-  void enableInverseStepPolarity();
-  void disableInverseStepPolarity();
-
-  void enableInverseDirPolarity();
-  void disableInverseDirPolarity();
-
-  void setSwitchesActiveLow();
-  void setSwitchesActiveHigh();
-
-  void enableLeftSwitchStop(size_t motor);
-  void disableLeftSwitchStop(size_t motor);
-  bool leftSwitchStopEnabled(size_t motor);
-  bool leftSwitchActive(size_t motor);
-
-  void enableRightSwitches();
-  void disableRightSwitches();
-  bool rightSwitchesEnabled();
-
-  void enableRightSwitchStop(size_t motor);
-  void disableRightSwitchStop(size_t motor);
-  bool rightSwitchStopEnabled(size_t motor);
-  bool rightSwitchActive(size_t motor);
-
-  void enableSwitchSoftStop(size_t motor);
-  void disableSwitchSoftStop(size_t motor);
-  bool switchSoftStopEnabled(size_t motor);
-
-  void setReferenceSwitchToLeft(size_t motor);
-  void setReferenceSwitchToRight(size_t motor);
-
-  void startLatchPositionWaiting(size_t motor);
-  bool latchPositionWaiting(size_t motor);
-  int32_t getLatchPosition(size_t motor);
-
-  void setPositionCompareMotor(size_t motor);
-
-  struct Status
-  {
-    uint8_t at_target_position_0 : 1;
-    uint8_t switch_left_0 : 1;
-    uint8_t at_target_position_1 : 1;
-    uint8_t switch_left_1 : 1;
-    uint8_t at_target_position_2 : 1;
-    uint8_t switch_left_2 : 1;
-    uint8_t cover_datagram_waiting : 1;
-    uint8_t interrupt : 1;
-  };
-  Status getStatus();
 
 private:
   enum Mode
@@ -161,44 +72,31 @@ private:
   // SPISettings
   const static uint32_t SPI_CLOCK = 1000000;
   const static uint8_t SPI_BIT_ORDER = MSBFIRST;
-  const static uint8_t SPI_MODE = SPI_MODE3;
-
-  const static uint8_t MOTOR_COUNT = 3;
-
-  const static uint32_t VERSION = 0x429101;
-
-  const static uint8_t CLOCK_FREQUENCY_MAX = 32;
-  const static uint8_t STEP_DIV_MAX = 15;
-  const static uint32_t MHZ_PER_HZ = 1000000;
-  const static uint32_t VELOCITY_CONSTANT = 65536;
-  const static uint32_t VELOCITY_REGISTER_MIN = 0;
-  const static uint32_t VELOCITY_REGISTER_MAX = 2047;
-  const static uint32_t VELOCITY_REGISTER_THRESHOLD = 1448;
-  const static uint32_t ACCELERATION_REGISTER_MIN = 1;
-  const static uint32_t ACCELERATION_REGISTER_MAX = 2047;
-  const static uint32_t ACCELERATION_CONSTANT = 536870912; // (1 << 29)
-  const static uint16_t VELOCITY_MIN_MIN = 1;
-
-  Status status_;
-  uint8_t clock_frequency_;
-  uint8_t pulse_div_[MOTOR_COUNT];
-  uint8_t ramp_div_[MOTOR_COUNT];
+  const static uint8_t SPI_MODE = SPI_MODE1;
 
   // Datagrams
-  const static uint8_t DATAGRAM_SIZE = 4;
+  const static uint8_t DATAGRAM_SIZE = 2;
 
   // MOSI Datagrams
-  union MosiDatagram
+  union MosiDatagramCommand
   {
     struct Fields
     {
-      uint32_t data : 24;
-      uint32_t rw : 1;
-      uint32_t address : 4;
-      uint32_t smda : 2;
-      uint32_t rrs : 1;
+      uint16_t address : 14;
+      uint16_t rw : 1;
+      uint16_t par : 1;
     } fields;
-    uint32_t uint32;
+    uint16_t uint16;
+  };
+  union MosiDatagramWrite
+  {
+    struct Fields
+    {
+      uint16_t data : 14;
+      uint16_t ef : 1;
+      uint16_t par : 1;
+    } fields;
+    uint16_t uint16;
   };
   const static uint8_t RW_READ = 1;
   const static uint8_t RW_WRITE = 0;
@@ -244,10 +142,10 @@ private:
   {
     struct Fields
     {
-      uint32_t data : 24;
+      uint16_t data : 14;
       Status status;
     } fields;
-    uint32_t uint32;
+    uint16_t uint16;
   };
 
   // Masks
@@ -333,9 +231,6 @@ private:
   };
 
   size_t chip_select_pin_;
-
-  void setStepDirOutput();
-  // void setSpiOutput();
 
   uint32_t readRegister(uint8_t smda,
     uint8_t address);
