@@ -4,11 +4,39 @@
 
 
 const long BAUD = 115200;
-const int LOOP_DELAY = 2000;
+const int LOOP_DELAY = 500;
 const int CHIP_SELECT_PIN = 10;
 
 // Instantiate AS5048
 AS5048 as5048;
+AS5048::Error error;
+
+void printError(AS5048::Error error)
+{
+  if (error.framing_error)
+  {
+    Serial << "framing_error!\n\n";
+  }
+  if (error.command_invalid)
+  {
+    Serial << "command_invalid!\n\n";
+  }
+  if (error.parity_error)
+  {
+    Serial << "parity_error!\n\n";
+  }
+}
+
+void printDiagnostics(AS5048::Diagnostics diagnostics)
+{
+  Serial << "diagnostics:\n";
+  Serial << "agc_value = " << diagnostics.agc_value << "\n";
+  Serial << "ocf = " << diagnostics.ocf << "\n";
+  Serial << "cof = " << diagnostics.cof << "\n";
+  Serial << "comp_low = " << diagnostics.comp_low << "\n";
+  Serial << "comp_high = " << diagnostics.comp_high << "\n";
+  Serial << "\n";
+}
 
 void setup()
 {
@@ -20,7 +48,16 @@ void setup()
 
 void loop()
 {
-  uint16_t diagnostics = as5048.getDiagnostics();
-  Serial << "diagnostics: " << _BIN(diagnostics) << "\n\n";
+  AS5048::Diagnostics diagnostics = as5048.getDiagnostics();
+  if (!as5048.transmissionError())
+  {
+    printDiagnostics(diagnostics);
+  }
+  else
+  {
+    Serial << "transmision error!\n";
+    AS5048::Error error = as5048.getError();
+    printError(error);
+  }
   delay(LOOP_DELAY);
 }

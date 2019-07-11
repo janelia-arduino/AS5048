@@ -16,7 +16,26 @@ class AS5048
 public:
   void setup(size_t chip_select_pin);
 
-  uint16_t getDiagnostics();
+  struct Diagnostics
+  {
+    uint16_t agc_value : 8;
+    uint16_t ocf : 1;
+    uint16_t cof : 1;
+    uint16_t comp_low : 1;
+    uint16_t comp_high : 1;
+    uint16_t space : 4;
+  };
+  Diagnostics getDiagnostics();
+
+  struct Error
+  {
+    uint8_t framing_error : 1;
+    uint8_t command_invalid : 1;
+    uint8_t parity_error : 1;
+    uint8_t space : 5;
+  };
+  bool transmissionError();
+  Error getError();
 
 private:
   // SPISettings
@@ -61,14 +80,12 @@ private:
   const static uint16_t ADDRESS_CLEAR_ERROR_FLAG = 0x0001;
   const static uint16_t ADDRESS_PROGRAMMING_CONTROL = 0x0003;
 
-  union ClearErrorFlag
+  union ErrorFlag
   {
     struct Fields
     {
-      uint16_t framing_error : 1;
-      uint16_t command_invalid : 1;
-      uint16_t parity_error : 1;
-      uint16_t space : 13;
+      Error error;
+      uint16_t space : 8;
     } fields;
     uint16_t uint16;
   };
@@ -99,12 +116,7 @@ private:
   {
     struct Fields
     {
-      uint16_t agc_value : 8;
-      uint16_t ocf : 1;
-      uint16_t cof : 1;
-      uint16_t comp_low : 1;
-      uint16_t comp_high : 1;
-      uint16_t space : 4;
+      Diagnostics diagnostics;
     } fields;
     uint16_t uint16;
   };
@@ -120,6 +132,9 @@ private:
   MisoDatagram writeRead(MosiDatagram mosi_datagram);
   uint8_t calculateEvenParityBit(uint16_t value);
 
+  bool transmission_error_;
+  Error error_;
+  void clearError();
 };
 
 #endif

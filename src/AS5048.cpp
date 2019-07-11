@@ -10,6 +10,7 @@
 void AS5048::setup(size_t chip_select_pin)
 {
   chip_select_pin_ = chip_select_pin;
+  transmission_error_ = false;
 
   pinMode(chip_select_pin_,OUTPUT);
   disableChipSelect();
@@ -17,13 +18,25 @@ void AS5048::setup(size_t chip_select_pin)
   SPI.begin();
 }
 
-uint16_t AS5048::getDiagnostics()
+bool AS5048::transmissionError()
 {
-  // DiagnosticsGainControl diag_gain_control;
-  // diag_gain_control.uint16 = readRegister(ADDRESS_DIAG_AGC);
-  // return diag_gain_control.fields.ocf;
-  uint16_t diagnostics = readRegister(ADDRESS_DIAG_AGC);
-  return diagnostics;
+  return transmission_error_;
+}
+
+AS5048::Error AS5048::getError()
+{
+  return error_;
+}
+
+AS5048::Diagnostics AS5048::getDiagnostics()
+{
+  DiagnosticsGainControl diag_gain_control;
+  diag_gain_control.uint16 = readRegister(ADDRESS_DIAG_AGC);
+  if (transmissionError())
+  {
+    clearError();
+  }
+  return diag_gain_control.fields.diagnostics;
 }
 
 // private
@@ -53,9 +66,10 @@ void AS5048::spiEndTransaction()
 uint16_t AS5048::readRegister(uint16_t address)
 {
   MosiDatagram mosi_datagram;
+  mosi_datagram.uint16 = 0;
   mosi_datagram.fields.address_data = address;
   mosi_datagram.fields.rw = RW_READ;
-  mosi_datagram.fields.par = calculateEvenParityBit(address);
+  mosi_datagram.fields.par = calculateEvenParityBit(mosi_datagram.uint16);
   writeRead(mosi_datagram);
   MisoDatagram miso_datagram = writeRead(mosi_datagram);
   return miso_datagram.fields.data;
@@ -83,6 +97,19 @@ AS5048::MisoDatagram AS5048::writeRead(MosiDatagram mosi_datagram)
     miso_datagram.uint16 |= ((uint16_t)byte_read) << (8*i);
   }
   spiEndTransaction();
+  noInterrupts();
+  if (miso_datagram.fields.ef)
+  {
+    transmission_error_ = true;
+  }
+  else
+  {
+    transmission_error_ = false;
+    error_.framing_error = 0;
+    error_.command_invalid = 0;
+    error_.parity_error = 0;
+  }
+  interrupts();
   return miso_datagram;
 }
 
@@ -96,4 +123,11 @@ uint8_t AS5048::calculateEvenParityBit(uint16_t value)
   }
   while ((i++) < ADDRESS_DATA_BIT_COUNT);
   return operand_compare & 0x1;
+}
+
+void AS5048::clearError()
+{
+  ErrorFlag error_flag;
+  error_flag.uint16 = readRegister(ADDRESS_CLEAR_ERROR_FLAG);
+  error_ = error_flag.fields.error;
 }
