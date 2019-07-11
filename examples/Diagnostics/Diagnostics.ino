@@ -30,11 +30,11 @@ void printError(AS5048::Error error)
 void printDiagnostics(AS5048::Diagnostics diagnostics)
 {
   Serial << "diagnostics:\n";
-  Serial << "agc_value = " << diagnostics.agc_value << "\n";
-  Serial << "ocf = " << diagnostics.ocf << "\n";
-  Serial << "cof = " << diagnostics.cof << "\n";
-  Serial << "comp_low = " << diagnostics.comp_low << "\n";
-  Serial << "comp_high = " << diagnostics.comp_high << "\n";
+  Serial << "automatic_gain_control = " << diagnostics.automatic_gain_control << "\n";
+  Serial << "offset_compensation_finished = " << diagnostics.offset_compensation_finished << "\n";
+  Serial << "cordic_overflow = " << diagnostics.cordic_overflow << "\n";
+  Serial << "weak_magnetic_field = " << diagnostics.weak_magnetic_field << "\n";
+  Serial << "strong_magnetic_field = " << diagnostics.strong_magnetic_field << "\n";
   Serial << "\n";
 }
 

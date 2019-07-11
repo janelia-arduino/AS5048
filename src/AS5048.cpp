@@ -18,6 +18,26 @@ void AS5048::setup(size_t chip_select_pin)
   SPI.begin();
 }
 
+uint16_t AS5048::getAngle()
+{
+  return readRegister(ADDRESS_ANGLE);
+}
+
+uint16_t AS5048::getAngleMin()
+{
+  return 0;
+}
+
+uint16_t AS5048::getAngleMax()
+{
+  return (1 << ADDRESS_DATA_BIT_COUNT);
+}
+
+uint16_t AS5048::getMagnitude()
+{
+  return readRegister(ADDRESS_MAGNITUDE);
+}
+
 bool AS5048::transmissionError()
 {
   return transmission_error_;
@@ -70,6 +90,7 @@ uint16_t AS5048::readRegister(uint16_t address)
   mosi_datagram.fields.address_data = address;
   mosi_datagram.fields.rw = RW_READ;
   mosi_datagram.fields.par = calculateEvenParityBit(mosi_datagram.uint16);
+  // for a single read command two transmission sequences are necessary
   writeRead(mosi_datagram);
   MisoDatagram miso_datagram = writeRead(mosi_datagram);
   return miso_datagram.fields.data;
@@ -78,11 +99,21 @@ uint16_t AS5048::readRegister(uint16_t address)
 void AS5048::writeRegister(uint16_t address,
   uint16_t data)
 {
-  // MosiDatagram mosi_datagram;
-  // mosi_datagram.fields.address = address;
-  // mosi_datagram.fields.rw = RW_WRITE;
-  // mosi_datagram.fields.data = data;
-  // writeRead(mosi_datagram);
+  MosiDatagram mosi_datagram;
+
+  // write address
+  mosi_datagram.uint16 = 0;
+  mosi_datagram.fields.address_data = address;
+  mosi_datagram.fields.rw = RW_WRITE;
+  mosi_datagram.fields.par = calculateEvenParityBit(mosi_datagram.uint16);
+  writeRead(mosi_datagram);
+
+  // write data
+  mosi_datagram.uint16 = 0;
+  mosi_datagram.fields.address_data = data;
+  mosi_datagram.fields.rw = RW_WRITE;
+  mosi_datagram.fields.par = calculateEvenParityBit(mosi_datagram.uint16);
+  writeRead(mosi_datagram);
 }
 
 AS5048::MisoDatagram AS5048::writeRead(MosiDatagram mosi_datagram)

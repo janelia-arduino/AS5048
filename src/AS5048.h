@@ -16,13 +16,19 @@ class AS5048
 public:
   void setup(size_t chip_select_pin);
 
+  uint16_t getAngle();
+  uint16_t getAngleMin();
+  uint16_t getAngleMax();
+
+  uint16_t getMagnitude();
+
   struct Diagnostics
   {
-    uint16_t agc_value : 8;
-    uint16_t ocf : 1;
-    uint16_t cof : 1;
-    uint16_t comp_low : 1;
-    uint16_t comp_high : 1;
+    uint16_t automatic_gain_control : 8;
+    uint16_t offset_compensation_finished : 1;
+    uint16_t cordic_overflow : 1;
+    uint16_t weak_magnetic_field : 1;
+    uint16_t strong_magnetic_field : 1;
     uint16_t space : 4;
   };
   Diagnostics getDiagnostics();
