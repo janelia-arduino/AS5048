@@ -27,7 +27,7 @@ void loop()
   if (!as5048.transmissionError())
   {
     Serial << "angle = " << angle << "\n";
-    uint8_t percent = (100 * angle) / (as5048.getAngleMax() - as5048.getAngleMin());
+    uint8_t percent = (100 * angle) / (as5048.ANGLE_MAX - as5048.ANGLE_MIN);
     Serial << "percent = " << percent << "\n";
   }
   else

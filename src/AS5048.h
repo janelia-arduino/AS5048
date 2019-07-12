@@ -16,9 +16,9 @@ class AS5048
 public:
   void setup(size_t chip_select_pin);
 
+  const static uint16_t ANGLE_MIN = 0;
+  const static uint16_t ANGLE_MAX = 16383;
   uint16_t getAngle();
-  uint16_t getAngleMin();
-  uint16_t getAngleMax();
 
   uint16_t getMagnitude();
 

@@ -23,16 +23,6 @@ uint16_t AS5048::getAngle()
   return readRegister(ADDRESS_ANGLE);
 }
 
-uint16_t AS5048::getAngleMin()
-{
-  return 0;
-}
-
-uint16_t AS5048::getAngleMax()
-{
-  return (1 << ADDRESS_DATA_BIT_COUNT);
-}
-
 uint16_t AS5048::getMagnitude()
 {
   return readRegister(ADDRESS_MAGNITUDE);
