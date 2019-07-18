@@ -18,9 +18,9 @@ void AS5048::setup(size_t chip_select_pin)
   SPI.begin();
 }
 
-uint16_t AS5048::getAngle()
+uint16_t AS5048::getAngle(uint8_t samples_in_average)
 {
-  return readRegister(ADDRESS_ANGLE);
+  return readRegisterAndAverage(ADDRESS_ANGLE,samples_in_average);
 }
 
 uint16_t AS5048::getMagnitude()
@@ -84,6 +84,29 @@ uint16_t AS5048::readRegister(uint16_t address)
   writeRead(mosi_datagram);
   MisoDatagram miso_datagram = writeRead(mosi_datagram);
   return miso_datagram.fields.data;
+}
+
+uint16_t AS5048::readRegisterAndAverage(uint16_t address,
+  uint8_t samples_in_average)
+{
+  samples_in_average = constrain(samples_in_average,
+    SAMPLES_IN_AVERAGE_MIN,
+    SAMPLES_IN_AVERAGE_MAX);
+  MosiDatagram mosi_datagram;
+  mosi_datagram.uint16 = 0;
+  mosi_datagram.fields.address_data = address;
+  mosi_datagram.fields.rw = RW_READ;
+  mosi_datagram.fields.par = calculateEvenParityBit(mosi_datagram.uint16);
+  // for a single read command two transmission sequences are necessary
+  writeRead(mosi_datagram);
+  MisoDatagram miso_datagram;
+  uint32_t value = 0;
+  for (uint8_t i=0; i<samples_in_average; ++i)
+  {
+    miso_datagram = writeRead(mosi_datagram);
+    value += miso_datagram.fields.data;
+  }
+  return value / samples_in_average;
 }
 
 void AS5048::writeRegister(uint16_t address,

@@ -18,7 +18,7 @@ public:
 
   const static uint16_t ANGLE_MIN = 0;
   const static uint16_t ANGLE_MAX = 16383;
-  uint16_t getAngle();
+  uint16_t getAngle(uint8_t samples_in_average=1);
 
   uint16_t getMagnitude();
 
@@ -133,6 +133,10 @@ private:
   void spiEndTransaction();
 
   uint16_t readRegister(uint16_t address);
+  const static uint8_t SAMPLES_IN_AVERAGE_MIN = 1;
+  const static uint8_t SAMPLES_IN_AVERAGE_MAX = 64;
+  uint16_t readRegisterAndAverage(uint16_t address,
+    uint8_t samples_in_average);
   void writeRegister(uint16_t address,
     uint16_t data);
   MisoDatagram writeRead(MosiDatagram mosi_datagram);

@@ -6,6 +6,7 @@
 const long BAUD = 115200;
 const int LOOP_DELAY = 100;
 const int CHIP_SELECT_PIN = 10;
+const int SAMPLES_IN_AVERAGE = 64;
 
 // Instantiate AS5048
 AS5048 as5048;
@@ -23,7 +24,7 @@ void setup()
 
 void loop()
 {
-  angle = as5048.getAngle();
+  angle = as5048.getAngle(SAMPLES_IN_AVERAGE);
   if (!as5048.transmissionError())
   {
     Serial << "angle = " << angle << "\n";
