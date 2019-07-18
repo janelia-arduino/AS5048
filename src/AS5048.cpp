@@ -16,11 +16,65 @@ void AS5048::setup(size_t chip_select_pin)
   disableChipSelect();
 
   SPI.begin();
+
+  angle_previous_ = getAngle();
+  position_ = 0;
+  invert_position_direction_ = false;
 }
 
-uint16_t AS5048::getAngle(uint8_t samples_in_average)
+uint16_t AS5048::getAngle(uint8_t samples_per_average)
 {
-  return readRegisterAndAverage(ADDRESS_ANGLE,samples_in_average);
+  return readRegisterAndAverage(ADDRESS_ANGLE,samples_per_average);
+}
+
+int32_t AS5048::getPosition(uint8_t samples_per_average)
+{
+  int32_t angle = getAngle(samples_per_average);
+  int32_t angle_change;
+  int32_t angle_change_a = angle - angle_previous_;
+  int32_t angle_change_b;
+  if (angle < angle_previous_)
+  {
+    angle_change_b = ANGLE_MAX + angle - angle_previous_;
+  }
+  else
+  {
+    angle_change_b = angle - ANGLE_MAX - angle_previous_;
+  }
+  if (abs(angle_change_a) < abs(angle_change_b))
+  {
+    angle_change = angle_change_a;
+  }
+  else
+  {
+    angle_change = angle_change_b;
+  }
+
+  if (invert_position_direction_)
+  {
+    angle_change *= -1;
+  }
+
+  position_ += angle_change;
+  angle_previous_ = angle;
+  return position_;
+}
+
+void AS5048::setPosition(int32_t position)
+{
+  noInterrupts();
+  position_ = position;
+  interrupts();
+}
+
+void AS5048::setPositionDirectionInverted()
+{
+  invert_position_direction_ = true;
+}
+
+void AS5048::setPositionDirectionNormal()
+{
+  invert_position_direction_ = false;
 }
 
 uint16_t AS5048::getMagnitude()
@@ -87,11 +141,11 @@ uint16_t AS5048::readRegister(uint16_t address)
 }
 
 uint16_t AS5048::readRegisterAndAverage(uint16_t address,
-  uint8_t samples_in_average)
+  uint8_t samples_per_average)
 {
-  samples_in_average = constrain(samples_in_average,
-    SAMPLES_IN_AVERAGE_MIN,
-    SAMPLES_IN_AVERAGE_MAX);
+  samples_per_average = constrain(samples_per_average,
+    SAMPLES_PER_AVERAGE_MIN,
+    SAMPLES_PER_AVERAGE_MAX);
   MosiDatagram mosi_datagram;
   mosi_datagram.uint16 = 0;
   mosi_datagram.fields.address_data = address;
@@ -101,12 +155,12 @@ uint16_t AS5048::readRegisterAndAverage(uint16_t address,
   writeRead(mosi_datagram);
   MisoDatagram miso_datagram;
   uint32_t value = 0;
-  for (uint8_t i=0; i<samples_in_average; ++i)
+  for (uint8_t i=0; i<samples_per_average; ++i)
   {
     miso_datagram = writeRead(mosi_datagram);
     value += miso_datagram.fields.data;
   }
-  return value / samples_in_average;
+  return value / samples_per_average;
 }
 
 void AS5048::writeRegister(uint16_t address,

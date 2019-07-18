@@ -18,7 +18,13 @@ public:
 
   const static uint16_t ANGLE_MIN = 0;
   const static uint16_t ANGLE_MAX = 16383;
-  uint16_t getAngle(uint8_t samples_in_average=1);
+  uint16_t getAngle(uint8_t samples_per_average=1);
+
+  const static uint16_t POSITIONS_PER_REVOLUTION = ANGLE_MAX;
+  int32_t getPosition(uint8_t samples_per_average=1);
+  void setPosition(int32_t position);
+  void setPositionDirectionInverted();
+  void setPositionDirectionNormal();
 
   uint16_t getMagnitude();
 
@@ -133,10 +139,10 @@ private:
   void spiEndTransaction();
 
   uint16_t readRegister(uint16_t address);
-  const static uint8_t SAMPLES_IN_AVERAGE_MIN = 1;
-  const static uint8_t SAMPLES_IN_AVERAGE_MAX = 64;
+  const static uint8_t SAMPLES_PER_AVERAGE_MIN = 1;
+  const static uint8_t SAMPLES_PER_AVERAGE_MAX = 64;
   uint16_t readRegisterAndAverage(uint16_t address,
-    uint8_t samples_in_average);
+    uint8_t samples_per_average);
   void writeRegister(uint16_t address,
     uint16_t data);
   MisoDatagram writeRead(MosiDatagram mosi_datagram);
@@ -145,6 +151,10 @@ private:
   bool transmission_error_;
   Error error_;
   void clearError();
+
+  int32_t angle_previous_;
+  int32_t position_;
+  bool invert_position_direction_;
 };
 
 #endif
