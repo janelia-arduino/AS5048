@@ -2,7 +2,7 @@
 // AS5048.h
 //
 // Authors:
-// Peter Polidoro peterpolidoro@gmail.com
+// Peter Polidoro peter@polidoro.io
 // ----------------------------------------------------------------------------
 #ifndef AS5048_H
 #define AS5048_H
